@@ -75,6 +75,5 @@ async def delete_task(task_id: uuid.UUID, session: AsyncSession = Depends(get_se
     result = await session.execute(stmt)
     await session.commit()
     if result.rowcount == 0:
-        # To avoid leaking task ownership info, return 404
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     return
