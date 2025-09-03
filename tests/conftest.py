@@ -1,9 +1,12 @@
 import os
+os.environ["APP_ENV"] = "test"
+
 import asyncio
 import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy import text
+from httpx import AsyncClient, ASGITransport
+from sqlalchemy.ext.asyncio import create_async_engine
+from app.db.base import Base
+from app.main import app
 from app.core.config import settings
 from app.db.base import Base
 from app.main import app
@@ -30,7 +33,10 @@ def test_db():
             await conn.run_sync(Base.metadata.drop_all)
     asyncio.get_event_loop().run_until_complete(teardown())
 
+from typing import AsyncGenerator
+
 @pytest.fixture
-async def client() -> AsyncClient:
-    async with AsyncClient(app=app, base_url="http://testserver") as ac:
+async def client() -> AsyncGenerator[AsyncClient, None]:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         yield ac
